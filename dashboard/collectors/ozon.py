@@ -123,8 +123,13 @@ def collect(cabinet_key: str, day: date, reference: dict = None) -> list:
     headers = {"Client-Id": secret(f"{p}_CLIENT_ID"), "Api-Key": secret(f"{p}_API_KEY")}
     since, to = _bounds(day)
 
-    postings = _postings(headers, "/v3/posting/fbo/list", since, to, 100) + \
-               _postings(headers, "/v3/posting/fbs/list", since, to, 1000)
+    postings = _postings(headers, "/v3/posting/fbo/list", since, to, 100)
+    try:
+        postings += _postings(headers, "/v3/posting/fbs/list", since, to, 1000)
+    except OzonError as e:
+        if "HTTP 404" not in str(e):
+            raise
+        postings += _postings(headers, "/v2/posting/fbs/list", since, to, 1000)
     returns = _returns(headers, since, to)
 
     offers = [pr.get("offer_id") for po in postings for pr in po.get("products", [])]
