@@ -28,10 +28,10 @@ class WBError(Exception):
 
 def _get(url, params):
     h = {"Authorization": secret("WB_BS_TOKEN")}
-    for attempt in range(3):
+    for attempt in range(4):
         r = requests.get(url, headers=h, params=params, timeout=TIMEOUT)
-        if r.status_code == 429 and attempt < 2:
-            time.sleep(65)  # лимиты WB: примерно 1 запрос в минуту
+        if r.status_code == 429 and attempt < 3:
+            time.sleep(70)  # лимиты WB: примерно 1 запрос в минуту
             continue
         if r.status_code != 200:
             raise WBError(f"HTTP {r.status_code} {url.split('wildberries.ru')[-1]}")

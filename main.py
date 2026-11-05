@@ -23,19 +23,20 @@ def main() -> int:
         reference = {}
     rows, done, failed = [], 0, 0
     for cab in CABINETS:
-        try:
-            for platform in cab.platforms:
+        for platform in cab.platforms:  # сбой одной площадки не ломает остальные
+            try:
                 rows += COLLECTORS[platform].collect(cab.key, day, reference)
-            done += 1
-        except Exception as e:  # текст ошибки без данных
-            failed += 1
-            print(f"Ошибка в кабинете {cab.key}: {e if type(e).__name__ in ('OzonError', 'WBError', 'YMError') else type(e).__name__}")
+                done += 1
+            except Exception as e:  # текст ошибки без данных
+                failed += 1
+                name = e if type(e).__name__ in ("OzonError", "WBError", "YMError") else type(e).__name__
+                print(f"Ошибка {cab.key}/{platform}: {name}")
     try:
         sheets.append_rows(rows)
     except Exception as e:
         print(f"Ошибка записи в таблицу: {type(e).__name__}")
         return 1
-    print(f"Готово. Кабинетов обработано: {done}, с ошибкой: {failed}")
+    print(f"Готово. Площадок обработано: {done}, с ошибкой: {failed}")
     return 1 if failed else 0
 
 
