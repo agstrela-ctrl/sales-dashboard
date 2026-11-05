@@ -168,7 +168,11 @@ def collect(cabinet_key: str, day: date, reference: dict = None) -> list:
 
     rows = [Row(day, cabinet_key, "ozon", b, m, round(v, 2)) for (b, m), v in acc.items()]
     # ВРЕМЕННАЯ диагностика (удалить после проверки): число отправлений по типам
-    rows += [Row(day, cabinet_key, "ozon", "", "debug_fbo_postings", n_fbo),
+    ts = sorted(str(x.get("created_at") or x.get("in_process_at") or "") for x in fbo) or [""]
+    rows += [Row(day, cabinet_key, "ozon", "", "debug_fbo_first_created", ts[0]),
+             Row(day, cabinet_key, "ozon", "", "debug_fbo_last_created", ts[-1]),
+             Row(day, cabinet_key, "ozon", "", "debug_window_utc", f"{since} .. {to}"),
+             Row(day, cabinet_key, "ozon", "", "debug_fbo_postings", n_fbo),
              Row(day, cabinet_key, "ozon", "", "debug_fbs_postings", n_fbs)]
     # Реклама Озона не делится по брендам — общей суммой по кабинету (бренд пустой).
     # Если ключей Performance API нет — рекламу пропускаем (остальное собирается).
