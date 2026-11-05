@@ -4,6 +4,7 @@
 import sys
 
 from dashboard.sheets import open_spreadsheet
+from dashboard import layout
 
 SHEETS = {
     "Дашборд": None,
@@ -23,6 +24,7 @@ def main() -> int:
             if header:
                 ws.append_row(header)
                 ws.freeze(rows=1)
+        layout.apply(sp.worksheet("Дашборд"))
     except Exception as e:
         print(f"Ошибка: {type(e).__name__}")
         return 1
