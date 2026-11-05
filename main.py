@@ -29,7 +29,7 @@ def main() -> int:
             done += 1
         except Exception as e:  # текст ошибки без данных
             failed += 1
-            print(f"Ошибка в кабинете {cab.key}: {e if type(e).__name__ == 'OzonError' else type(e).__name__}")
+            print(f"Ошибка в кабинете {cab.key}: {e if type(e).__name__ in ('OzonError', 'WBError', 'YMError') else type(e).__name__}")
     try:
         sheets.append_rows(rows)
     except Exception as e:
