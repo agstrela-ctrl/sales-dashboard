@@ -1,0 +1,46 @@
+name: Загрузка истории
+
+on:
+  workflow_dispatch:
+    inputs:
+      start:
+        description: "С какой даты (ГГГГ-ММ-ДД)"
+        required: true
+      end:
+        description: "По какую дату (ГГГГ-ММ-ДД)"
+        required: true
+      platforms:
+        description: "Площадки через запятую"
+        required: false
+        default: "ozon,yandex"
+
+permissions:
+  contents: read
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Загрузка
+        env:
+          OZON_MECO_CLIENT_ID: ${{ secrets.OZON_MECO_CLIENT_ID }}
+          OZON_MECO_API_KEY: ${{ secrets.OZON_MECO_API_KEY }}
+          OZON_BS_CLIENT_ID: ${{ secrets.OZON_BS_CLIENT_ID }}
+          OZON_BS_API_KEY: ${{ secrets.OZON_BS_API_KEY }}
+          WB_BS_TOKEN: ${{ secrets.WB_BS_TOKEN }}
+          YM_BS_API_KEY: ${{ secrets.YM_BS_API_KEY }}
+          YM_BS_CAMPAIGN_ID: ${{ secrets.YM_BS_CAMPAIGN_ID }}
+          YM_BS_BUSINESS_ID: ${{ secrets.YM_BS_BUSINESS_ID }}
+          GOOGLE_SA_JSON: ${{ secrets.GOOGLE_SA_JSON }}
+          SHEET_ID: ${{ secrets.SHEET_ID }}
+          START: ${{ inputs.start }}
+          END: ${{ inputs.end }}
+          PLATFORMS: ${{ inputs.platforms }}
+        run: python backfill.py "$START" "$END" "$PLATFORMS"
