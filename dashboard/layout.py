@@ -34,7 +34,7 @@ def _sum(metric, cab, plat, brand, when):
         parts.append(f'({COL["plat"]}="{plat}")')
     if brand:
         parts.append(f'(UPPER({COL["brand"]})="{brand.upper()}")')
-    return "SUMPRODUCT(" + "*".join(parts) + f'*{COL["val"]})'
+    return "SUMPRODUCT(" + "*".join(parts) + f'; {COL["val"]})'
 
 
 HEADERS = ["", "Заказы, шт", "Заказы, ₽", "Средний чек, ₽", "Отмены, шт", "Отмены, ₽",

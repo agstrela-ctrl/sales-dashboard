@@ -15,3 +15,5 @@ print("Ошибки:", dict(errs), "первые:", first)
 d = open_spreadsheet().worksheet("Данные").get_all_values(value_render_option="UNFORMATTED_VALUE")
 print("Строк в «Данные»:", len(d), "| типы столбца даты:", collections.Counter(type(r[0]).__name__ for r in d[1:]),
       "| типы значения:", collections.Counter(type(r[5]).__name__ for r in d[1:] if len(r) > 5))
+print("Строки с нечисловым значением (метрика, площадка):",
+      [(r[4], r[2]) for r in d[1:] if len(r) > 5 and not isinstance(r[5], (int, float))])
