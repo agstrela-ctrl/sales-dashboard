@@ -32,7 +32,7 @@ def main() -> int:
             data.update(values=clean, range_name="A1", value_input_option="RAW")
         layout.apply(sp.worksheet("Дашборд"))
     except Exception as e:
-        print(f"Ошибка: {type(e).__name__}")
+        print(f"Ошибка: {type(e).__name__} {str(e)[:300]}")
         return 1
     print("Готово: таблица подготовлена")
     return 0
