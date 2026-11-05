@@ -57,27 +57,14 @@ def _num(x) -> float:
         return 0.0
 
 
-def _postings(headers, path, since, to, limit):
-    """Постранично читает отправления FBO/FBS (лимит страницы зависит от метода)."""
-    out, offset = [], 0
-    while True:
-        body = {"dir": "ASC", "filter": {"since": since, "to": to},
-                "limit": limit, "offset": offset,
-                "with": {"analytics_data": False, "financial_data": False}}
-        data = _post(f"{SELLER}{path}", headers, body).get("result", {})
-        batch = data if isinstance(data, list) else data.get("postings", [])
-        out += batch
-        if len(batch) < limit:
-            return out
-        offset += len(batch)
-
-
-def _postings_v4(headers, since, to):
-    """FBS: метод v4, страницы по 100 через cursor (v3 Озон отключил)."""
+def _postings_cursor(headers, path, since, to):
+    """FBO v3 и FBS v4: страницы по 100 через cursor; ответ — {postings, has_next, cursor}
+    (на случай старого формата читаем и из result)."""
     out, cursor = [], ""
     while True:
         body = {"filter": {"since": since, "to": to}, "limit": 100, "cursor": cursor}
-        data = _post(f"{SELLER}/v4/posting/fbs/list", headers, body)
+        data = _post(f"{SELLER}{path}", headers, body)
+        data = data["result"] if isinstance(data.get("result"), dict) else data
         out += data.get("postings", [])
         new = data.get("cursor", "")
         if not data.get("has_next") or not new or new == cursor:
@@ -136,8 +123,8 @@ def collect(cabinet_key: str, day: date, reference: dict = None) -> list:
     headers = {"Client-Id": secret(f"{p}_CLIENT_ID"), "Api-Key": secret(f"{p}_API_KEY")}
     since, to = _bounds(day)
 
-    fbo = _postings(headers, "/v3/posting/fbo/list", since, to, 100)
-    fbs = _postings_v4(headers, since, to)
+    fbo = _postings_cursor(headers, "/v3/posting/fbo/list", since, to)
+    fbs = _postings_cursor(headers, "/v4/posting/fbs/list", since, to)
     n_fbo, n_fbs = len(fbo), len(fbs)
     postings = fbo + fbs
     returns = _returns(headers, since, to)
