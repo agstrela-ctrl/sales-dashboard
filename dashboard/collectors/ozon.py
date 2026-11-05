@@ -33,7 +33,11 @@ class OzonError(Exception):
 def _post(url, headers, body):
     r = requests.post(url, headers=headers, json=body, timeout=TIMEOUT)
     if r.status_code != 200:
-        raise OzonError(f"HTTP {r.status_code} {url.split('ozon.ru')[-1]}")
+        try:  # пояснение Озона об ошибке запроса (текст проверки полей, без данных)
+            msg = str(r.json().get("message", ""))[:200]
+        except Exception:
+            msg = ""
+        raise OzonError(f"HTTP {r.status_code} {url.split('ozon.ru')[-1]} {msg}".strip())
     return r.json()
 
 
@@ -58,7 +62,8 @@ def _postings(headers, path, since, to):
     out, offset = [], 0
     while True:
         body = {"dir": "ASC", "filter": {"since": since, "to": to},
-                "limit": 1000, "offset": offset, "with": {}}
+                "limit": 1000, "offset": offset,
+                "with": {"analytics_data": False, "financial_data": False}}
         data = _post(f"{SELLER}{path}", headers, body).get("result", {})
         batch = data if isinstance(data, list) else data.get("postings", [])
         out += batch
@@ -120,7 +125,7 @@ def collect(cabinet_key: str, day: date, reference: dict = None) -> list:
     headers = {"Client-Id": secret(f"{p}_CLIENT_ID"), "Api-Key": secret(f"{p}_API_KEY")}
     since, to = _bounds(day)
 
-    postings = _postings(headers, "/v2/posting/fbo/list", since, to) + \
+    postings = _postings(headers, "/v3/posting/fbo/list", since, to) + \
                _postings(headers, "/v3/posting/fbs/list", since, to)
     returns = _returns(headers, since, to)
 
