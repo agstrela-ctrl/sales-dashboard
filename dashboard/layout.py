@@ -19,18 +19,26 @@ COL = {"date": f"{D}$A$2:$A${N}", "cab": f"{D}$B$2:$B${N}", "plat": f"{D}$C$2:$C
 BLOCKS = [
     ("ОБЩИЙ ИТОГ", None, None, None, True, "total"),
     ("Meco (Озон)", "meco", None, None, True, "cab"),
-    ("Berton + Samley — всего", "berton_samley", None, None, True, "cab"),
+    ("Berton + Samley — кабинет всего", "berton_samley", None, None, True, "cab"),
     ("   Озон", "berton_samley", "ozon", None, True, "sub"),
     ("   Wildberries", "berton_samley", "wb", None, True, "sub"),
     ("   Яндекс.Маркет", "berton_samley", "yandex", None, True, "sub"),
-    ("   Бренд Berton (все площадки)", "berton_samley", None, "Berton", False, "sub"),
-    ("   Бренд Samley (все площадки)", "berton_samley", None, "Samley", False, "sub"),
+    ("BERTON — всего", "berton_samley", None, "Berton", False, "cab"),
+    ("   Озон ", "berton_samley", "ozon", "Berton", False, "sub"),
+    ("   Wildberries ", "berton_samley", "wb", "Berton", False, "sub"),
+    ("   Яндекс.Маркет ", "berton_samley", "yandex", "Berton", False, "sub"),
+    ("SAMLEY — всего", "berton_samley", None, "Samley", False, "cab"),
+    ("   Озон  ", "berton_samley", "ozon", "Samley", False, "sub"),
+    ("   Wildberries  ", "berton_samley", "wb", "Samley", False, "sub"),
+    ("   Яндекс.Маркет  ", "berton_samley", "yandex", "Samley", False, "sub"),
 ]
 HEAD = 13           # строка шапки таблицы
 FIRST = HEAD + 1    # первая строка данных (общий итог)
 LAST = HEAD + len(BLOCKS)
 T = FIRST           # строка «Общий итог»
-ROW = {b[0].strip(): FIRST + i for i, b in enumerate(BLOCKS)}
+ROW = {}
+for i, b in enumerate(BLOCKS):
+    ROW.setdefault(b[0].strip(), FIRST + i)  # при повторе названий берём первую (кабинетную) строку
 
 
 def _sum(metric, cab, plat, brand, when):
@@ -115,7 +123,7 @@ def build_values():
 
     notes = ["Примечания:",
              "• Заказы — созданные за день, без отменённых. Отмены — до получения. Возвраты покупателей пока не считаем.",
-             "• Реклама Озона и Яндекс.Маркета пока не подключена; по брендам реклама не делится.",
+             "• Реклама Озона и Яндекс.Маркета пока не подключена; реклама показана по кабинету и площадкам, по брендам не делится.",
              "• Прогноз = месяц нарастающим / номер дня × число дней в месяце (грубая оценка).",
              "• Светофор: 🔴 заказы упали на 20% и больше, или отмены от 15%, или ДРР от 15%; 🟡 внимание; 🟢 норма."]
     for i, t in enumerate(notes):
