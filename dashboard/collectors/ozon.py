@@ -51,7 +51,7 @@ def _bounds(day: date):
 def _num(x) -> float:
     try:
         if isinstance(x, dict):
-            x = x.get("price", 0)
+            x = x.get("amount", x.get("price", 0))
         return float(x)
     except (TypeError, ValueError):
         return 0.0
@@ -70,6 +70,19 @@ def _postings(headers, path, since, to, limit):
         if len(batch) < limit:
             return out
         offset += len(batch)
+
+
+def _postings_v4(headers, since, to):
+    """FBS: метод v4, страницы по 100 через cursor (v3 Озон отключил)."""
+    out, cursor = [], ""
+    while True:
+        body = {"filter": {"since": since, "to": to}, "limit": 100, "cursor": cursor}
+        data = _post(f"{SELLER}/v4/posting/fbs/list", headers, body)
+        out += data.get("postings", [])
+        new = data.get("cursor", "")
+        if not data.get("has_next") or not new or new == cursor:
+            return out
+        cursor = new
 
 
 def _returns(headers, since, to):
@@ -124,12 +137,7 @@ def collect(cabinet_key: str, day: date, reference: dict = None) -> list:
     since, to = _bounds(day)
 
     postings = _postings(headers, "/v3/posting/fbo/list", since, to, 100)
-    try:
-        postings += _postings(headers, "/v3/posting/fbs/list", since, to, 1000)
-    except OzonError as e:
-        if "HTTP 404" not in str(e):
-            raise
-        postings += _postings(headers, "/v2/posting/fbs/list", since, to, 1000)
+    postings += _postings_v4(headers, since, to)
     returns = _returns(headers, since, to)
 
     offers = [pr.get("offer_id") for po in postings for pr in po.get("products", [])]
