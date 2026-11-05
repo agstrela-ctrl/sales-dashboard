@@ -149,6 +149,8 @@ def collect(cabinet_key: str, day: date, reference: dict = None) -> list:
         acc[(b, "returns_rub")] += _num(pr.get("price")) * qty
 
     rows = [Row(day, cabinet_key, "ozon", b, m, round(v, 2)) for (b, m), v in acc.items()]
-    # Реклама Озона не делится по брендам — общей суммой по кабинету (бренд пустой)
-    rows.append(Row(day, cabinet_key, "ozon", "", "ad_spend", round(_ad_spend(cabinet_key, day), 2)))
+    # Реклама Озона не делится по брендам — общей суммой по кабинету (бренд пустой).
+    # Если ключей Performance API нет — рекламу пропускаем (остальное собирается).
+    if secret(f"{p}_PERF_CLIENT_ID") and secret(f"{p}_PERF_SECRET"):
+        rows.append(Row(day, cabinet_key, "ozon", "", "ad_spend", round(_ad_spend(cabinet_key, day), 2)))
     return rows
