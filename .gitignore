@@ -1,0 +1,28 @@
+# Данные и дампы — в открытый репозиторий не попадают
+*.csv
+*.xlsx
+*.xls
+*.json
+*.parquet
+*.sqlite
+*.db
+data/
+dumps/
+output/
+
+# Секреты
+.env
+.env.*
+*credentials*
+*service_account*
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# macOS / облачный диск
+.DS_Store
+._*
+CLAUDE.md

@@ -1,0 +1,20 @@
+name: Keepalive
+
+# GitHub отключает расписания в открытых репозиториях после 60 дней без активности.
+# Раз в месяц заново «включаем» основной workflow — это сбрасывает счётчик.
+on:
+  schedule:
+    - cron: "0 5 1 * *"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Re-enable daily workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/daily.yml/enable"
