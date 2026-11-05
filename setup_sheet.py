@@ -24,6 +24,12 @@ def main() -> int:
             if header:
                 ws.append_row(header)
                 ws.freeze(rows=1)
+        data = sp.worksheet("Данные")  # убрать остатки временной диагностики
+        allv = data.get_all_values(value_render_option="UNFORMATTED_VALUE")
+        clean = [r for r in allv if not (len(r) > 4 and str(r[4]).startswith("debug_"))]
+        if len(clean) != len(allv):
+            data.clear()
+            data.update(values=clean, range_name="A1", value_input_option="RAW")
         layout.apply(sp.worksheet("Дашборд"))
     except Exception as e:
         print(f"Ошибка: {type(e).__name__}")
