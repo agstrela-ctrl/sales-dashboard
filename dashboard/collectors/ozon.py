@@ -57,19 +57,17 @@ def _num(x) -> float:
         return 0.0
 
 
-def _postings(headers, path, since, to):
-    """Постранично читает отправления FBO/FBS."""
+def _postings(headers, path, since, to, limit):
+    """Постранично читает отправления FBO/FBS (лимит страницы зависит от метода)."""
     out, offset = [], 0
     while True:
         body = {"dir": "ASC", "filter": {"since": since, "to": to},
-                "limit": 1000, "offset": offset,
+                "limit": limit, "offset": offset,
                 "with": {"analytics_data": False, "financial_data": False}}
         data = _post(f"{SELLER}{path}", headers, body).get("result", {})
         batch = data if isinstance(data, list) else data.get("postings", [])
         out += batch
-        more = False if isinstance(data, list) else data.get("has_next", False)
-        if not batch or (isinstance(data, list) and len(batch) < 1000) or \
-                (not isinstance(data, list) and not more):
+        if len(batch) < limit:
             return out
         offset += len(batch)
 
@@ -125,8 +123,8 @@ def collect(cabinet_key: str, day: date, reference: dict = None) -> list:
     headers = {"Client-Id": secret(f"{p}_CLIENT_ID"), "Api-Key": secret(f"{p}_API_KEY")}
     since, to = _bounds(day)
 
-    postings = _postings(headers, "/v3/posting/fbo/list", since, to) + \
-               _postings(headers, "/v3/posting/fbs/list", since, to)
+    postings = _postings(headers, "/v3/posting/fbo/list", since, to, 100) + \
+               _postings(headers, "/v3/posting/fbs/list", since, to, 1000)
     returns = _returns(headers, since, to)
 
     offers = [pr.get("offer_id") for po in postings for pr in po.get("products", [])]
