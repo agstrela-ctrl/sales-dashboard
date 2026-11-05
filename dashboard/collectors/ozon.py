@@ -136,8 +136,10 @@ def collect(cabinet_key: str, day: date, reference: dict = None) -> list:
     headers = {"Client-Id": secret(f"{p}_CLIENT_ID"), "Api-Key": secret(f"{p}_API_KEY")}
     since, to = _bounds(day)
 
-    postings = _postings(headers, "/v3/posting/fbo/list", since, to, 100)
-    postings += _postings_v4(headers, since, to)
+    fbo = _postings(headers, "/v3/posting/fbo/list", since, to, 100)
+    fbs = _postings_v4(headers, since, to)
+    n_fbo, n_fbs = len(fbo), len(fbs)
+    postings = fbo + fbs
     returns = _returns(headers, since, to)
 
     offers = [pr.get("offer_id") for po in postings for pr in po.get("products", [])]
@@ -165,6 +167,9 @@ def collect(cabinet_key: str, day: date, reference: dict = None) -> list:
         acc[(b, "returns_rub")] += _num(pr.get("price")) * qty
 
     rows = [Row(day, cabinet_key, "ozon", b, m, round(v, 2)) for (b, m), v in acc.items()]
+    # ВРЕМЕННАЯ диагностика (удалить после проверки): число отправлений по типам
+    rows += [Row(day, cabinet_key, "ozon", "", "debug_fbo_postings", n_fbo),
+             Row(day, cabinet_key, "ozon", "", "debug_fbs_postings", n_fbs)]
     # Реклама Озона не делится по брендам — общей суммой по кабинету (бренд пустой).
     # Если ключей Performance API нет — рекламу пропускаем (остальное собирается).
     if secret(f"{p}_PERF_CLIENT_ID") and secret(f"{p}_PERF_SECRET"):

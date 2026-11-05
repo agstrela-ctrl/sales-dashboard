@@ -16,12 +16,31 @@ def open_spreadsheet():
     return gspread.authorize(creds).open_by_key(secret("SHEET_ID"))
 
 
+def _iso(v):
+    """Дата из таблицы (число-серийник или текст) → 'ГГГГ-ММ-ДД'."""
+    if isinstance(v, (int, float)):
+        from datetime import date, timedelta
+        return (date(1899, 12, 30) + timedelta(days=int(v))).isoformat()
+    return str(v)
+
+
 def append_rows(rows: list) -> None:
-    """Дописывает строки в лист «Данные»."""
+    """Пишет строки в лист «Данные». Повторный запуск за тот же день заменяет старые строки
+    (день + кабинет + площадка), а не дублирует их."""
     if not rows:
         return
     ws = open_spreadsheet().worksheet(DATA_SHEET)
-    ws.append_rows([r.as_list() for r in rows], value_input_option="USER_ENTERED")
+    old = ws.get_all_values(value_render_option="UNFORMATTED_VALUE")
+    header, body = old[:1], old[1:]
+    replaced = {(r.day.isoformat(), r.cabinet, r.platform) for r in rows}
+    kept = [[_iso(r[0])] + r[1:] for r in body
+            if len(r) > 2 and (_iso(r[0]), r[1], r[2]) not in replaced]
+    new = [r.as_list() for r in rows]
+    if len(kept) != len(body):
+        ws.clear()
+        ws.update(values=header + kept + new, range_name="A1", value_input_option="RAW")
+    else:
+        ws.append_rows(new, value_input_option="RAW")
 
 
 def read_reference() -> dict:
