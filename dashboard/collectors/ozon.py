@@ -21,6 +21,7 @@ PERF = "https://api-performance.ozon.ru"
 MSK = ZoneInfo("Europe/Moscow")
 BRAND_ATTR_ID = 85
 TIMEOUT = 60
+COLLECT_RETURNS = False  # возвраты покупателей пока не нужны; True — вернуть сбор
 
 PREFIX = {"meco": "OZON_MECO", "berton_samley": "OZON_BS"}
 FIXED_BRAND = {"meco": "Meco"}
@@ -125,9 +126,8 @@ def collect(cabinet_key: str, day: date, reference: dict = None) -> list:
 
     fbo = _postings_cursor(headers, "/v3/posting/fbo/list", since, to)
     fbs = _postings_cursor(headers, "/v4/posting/fbs/list", since, to)
-    n_fbo, n_fbs = len(fbo), len(fbs)
     postings = fbo + fbs
-    returns = _returns(headers, since, to)
+    returns = _returns(headers, since, to) if COLLECT_RETURNS else []
 
     offers = [pr.get("offer_id") for po in postings for pr in po.get("products", [])]
     offers += [(r.get("product") or {}).get("offer_id") for r in returns]
@@ -154,24 +154,6 @@ def collect(cabinet_key: str, day: date, reference: dict = None) -> list:
         acc[(b, "returns_rub")] += _num(pr.get("price")) * qty
 
     rows = [Row(day, cabinet_key, "ozon", b, m, round(v, 2)) for (b, m), v in acc.items()]
-    # ВРЕМЕННАЯ диагностика (удалить после проверки): число отправлений по типам
-    def _rng(vals):
-        vals = sorted(v for v in vals if v) or [""]
-        return f"{vals[0]} .. {vals[-1]}"
-    rows += [
-        Row(day, cabinet_key, "ozon", "", "debug_ret_status_moment",
-            _rng([str((r.get("visual") or {}).get("change_moment") or "") for r in returns])),
-        Row(day, cabinet_key, "ozon", "", "debug_ret_logistic_date",
-            _rng([str((r.get("logistic") or {}).get("return_date") or "") for r in returns])),
-        Row(day, cabinet_key, "ozon", "", "debug_ret_keys",
-            ",".join(sorted(returns[0].keys())) if returns else ""),
-    ]
-    ts = sorted(str(x.get("created_at") or x.get("in_process_at") or "") for x in fbo) or [""]
-    rows += [Row(day, cabinet_key, "ozon", "", "debug_fbo_first_created", ts[0]),
-             Row(day, cabinet_key, "ozon", "", "debug_fbo_last_created", ts[-1]),
-             Row(day, cabinet_key, "ozon", "", "debug_window_utc", f"{since} .. {to}"),
-             Row(day, cabinet_key, "ozon", "", "debug_fbo_postings", n_fbo),
-             Row(day, cabinet_key, "ozon", "", "debug_fbs_postings", n_fbs)]
     # Реклама Озона не делится по брендам — общей суммой по кабинету (бренд пустой).
     # Если ключей Performance API нет — рекламу пропускаем (остальное собирается).
     if secret(f"{p}_PERF_CLIENT_ID") and secret(f"{p}_PERF_SECRET"):
