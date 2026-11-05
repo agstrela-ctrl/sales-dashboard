@@ -131,6 +131,7 @@ def _rgb(h):
 def apply(ws):
     sp = ws.spreadsheet
     ws.clear()
+    ws.freeze(rows=0, cols=0)  # иначе нельзя объединять ячейки через замороженный столбец
     sp.batch_update({"requests": [{"unmergeCells": {"range": {"sheetId": ws.id}}}]})
     ws.update(values=build_values(), range_name="A1", value_input_option="USER_ENTERED")
 
