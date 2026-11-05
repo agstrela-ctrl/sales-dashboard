@@ -155,6 +155,17 @@ def collect(cabinet_key: str, day: date, reference: dict = None) -> list:
 
     rows = [Row(day, cabinet_key, "ozon", b, m, round(v, 2)) for (b, m), v in acc.items()]
     # ВРЕМЕННАЯ диагностика (удалить после проверки): число отправлений по типам
+    def _rng(vals):
+        vals = sorted(v for v in vals if v) or [""]
+        return f"{vals[0]} .. {vals[-1]}"
+    rows += [
+        Row(day, cabinet_key, "ozon", "", "debug_ret_status_moment",
+            _rng([str((r.get("visual") or {}).get("change_moment") or "") for r in returns])),
+        Row(day, cabinet_key, "ozon", "", "debug_ret_logistic_date",
+            _rng([str((r.get("logistic") or {}).get("return_date") or "") for r in returns])),
+        Row(day, cabinet_key, "ozon", "", "debug_ret_keys",
+            ",".join(sorted(returns[0].keys())) if returns else ""),
+    ]
     ts = sorted(str(x.get("created_at") or x.get("in_process_at") or "") for x in fbo) or [""]
     rows += [Row(day, cabinet_key, "ozon", "", "debug_fbo_first_created", ts[0]),
              Row(day, cabinet_key, "ozon", "", "debug_fbo_last_created", ts[-1]),
