@@ -22,3 +22,9 @@ def append_rows(rows: list) -> None:
         return
     ws = open_spreadsheet().worksheet(DATA_SHEET)
     ws.append_rows([r.as_list() for r in rows], value_input_option="USER_ENTERED")
+
+
+def read_reference() -> dict:
+    """Лист «Справочник»: артикул → бренд."""
+    ws = open_spreadsheet().worksheet("Справочник")
+    return {r[0]: r[1] for r in ws.get_all_values()[1:] if len(r) > 1 and r[0]}

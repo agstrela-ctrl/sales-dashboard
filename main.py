@@ -17,11 +17,15 @@ def yesterday_msk() -> date:
 
 def main() -> int:
     day = yesterday_msk()
+    try:
+        reference = sheets.read_reference()
+    except Exception:
+        reference = {}
     rows, done, failed = [], 0, 0
     for cab in CABINETS:
         try:
             for platform in cab.platforms:
-                rows += COLLECTORS[platform].collect(cab.key, day)
+                rows += COLLECTORS[platform].collect(cab.key, day, reference)
             done += 1
         except Exception as e:  # текст ошибки без данных
             failed += 1
