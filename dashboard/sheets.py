@@ -36,11 +36,9 @@ def append_rows(rows: list) -> None:
     kept = [[_iso(r[0])] + r[1:] for r in body
             if len(r) > 2 and (_iso(r[0]), r[1], r[2]) not in replaced]
     new = [r.as_list() for r in rows]
-    if len(kept) != len(body):
-        ws.clear()
-        ws.update(values=header + kept + new, range_name="A1", value_input_option="RAW")
-    else:
-        ws.append_rows(new, value_input_option="RAW")
+    merged = sorted(kept + new, key=lambda r: str(r[0]))  # по дате, порядок внутри дня сохраняется
+    ws.clear()
+    ws.update(values=header + merged, range_name="A1", value_input_option="RAW")
 
 
 def read_reference() -> dict:

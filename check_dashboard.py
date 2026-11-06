@@ -17,3 +17,6 @@ print("Строк в «Данные»:", len(d), "| типы столбца да
       "| типы значения:", collections.Counter(type(r[5]).__name__ for r in d[1:] if len(r) > 5))
 print("Строки с нечисловым значением (метрика, площадка):",
       [(r[4], r[2]) for r in d[1:] if len(r) > 5 and not isinstance(r[5], (int, float))])
+import collections as _c
+print("Строки за 2026-11-05 по площадкам:", dict(_c.Counter(r[2] for r in d[1:] if str(r[0]) == "2026-11-05")))
+print("Последние даты в «Данные»:", sorted({str(r[0]) for r in d[1:]})[-4:])
